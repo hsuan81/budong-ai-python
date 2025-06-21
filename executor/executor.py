@@ -2,8 +2,7 @@ from pydantic import BaseModel
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIModel
 
-from models.plan import Plan
-from models.step import Step, AgentConfig
+from models.core import Plan
 
 # class AgentExecutor:
 #     def __init__(self, client: OpenAI):
@@ -31,9 +30,10 @@ from models.step import Step, AgentConfig
 #         plan.status = "complete"
 #         return plan
 
+
 class AgentExecutor:
     """Executor for running planned steps."""
-    
+
     def __init__(self, model: OpenAIModel):
         self.model = model
 
@@ -41,13 +41,13 @@ class AgentExecutor:
         """Run a single agent with the given configuration."""
         agent = Agent(
             model=self.model,
-            system_prompt=config.get("system_prompt", "You are a helpful assistant.")
+            system_prompt=config.get("system_prompt", "You are a helpful assistant."),
         )
 
         prompt = config.get("task_prompt")
         if not prompt:
             raise ValueError("task_prompt must be provided in the agent configuration.")
-        
+
         result = agent.run_sync(prompt)
         return str(result.output)
 
@@ -57,15 +57,19 @@ class AgentExecutor:
     def execute_plan(self, plan: Plan) -> Plan:
         """Execute all steps in a plan."""
         for step in plan.steps:
-            step.status = "in_progress"
+            step.status = "executing"
             try:
-                config = step.agent_config.model_dump() if isinstance(step.agent_config, BaseModel) else step.agent_config
-                step.result = self.run_agent_test(config)
+                config = (
+                    step.agent_config.model_dump()
+                    if isinstance(step.agent_config, BaseModel)
+                    else step.agent_config
+                )
+                step.result = self.run_agent(config)
                 # step.result = self.run_agent(config)
                 step.status = "completed"
             except Exception as e:
                 step.result = f"Execution error: {e}"
                 step.status = "failed"
-        
+
         plan.status = "complete"
         return plan

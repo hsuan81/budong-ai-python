@@ -1,14 +1,14 @@
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from models.agents import AgentConfig
 
-class AgentConfig(BaseModel):
-    system_prompt: str = Field(
-        ..., description="Prompt that sets the behavior of the agent"
+
+class GeneratePlanArgs(BaseModel):
+    user_request: str = Field(
+        ..., description="The user's original request in natural language"
     )
-    task_prompt: str = Field(..., description="Specific instruction for the task")
-    # tools: Optional[List[str]] = Field(default=None, description="Optional list of tools the agent can use")
 
 
 class Step(BaseModel):
@@ -28,4 +28,16 @@ class Step(BaseModel):
     )
     feedback: Optional[str] = Field(
         default=None, description="Human feedback on the step"
+    )
+
+
+class Plan(BaseModel):
+    user_request: str
+    title: str = Field(description="Title of the plan")
+    description: str = Field(
+        description="Brief description of what the plan accomplishes"
+    )
+    steps: List[Step] = Field(description="List of steps to execute")
+    status: Literal["planned", "executing", "complete"] = (
+        "planned"  # Default status when a plan is created
     )

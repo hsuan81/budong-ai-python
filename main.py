@@ -21,6 +21,7 @@ plan = master.generate_plan_sync(request)
 print(f"\nGenerated plan: {plan.title}")
 print(f"Description: {plan.description}")
 print(f"Number of steps: {len(plan.steps)}")
+print(f"Plan status: {plan.status}")
 
 # Execute the plan
 executor = AgentExecutor(model=model)
